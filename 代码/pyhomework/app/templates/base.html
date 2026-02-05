@@ -1,0 +1,496 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}计算机课程推荐平台{% endblock %}</title>
+
+    <!-- 公共 CSS -->
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-3.4.1-dist/css/bootstrap.min.css' %}">
+    <link href="{% static 'css/vis-network.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'plugins/font-awesome-4.7.0/css/font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'dynamic/style.css' %}">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --text-light: #ecf0f1;
+            --text-dark: #2c3e50;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container-fluid {
+            width: 90%;
+        }
+
+        /* 动态背景容器 */
+        .dynamic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* 确保背景在内容后面 */
+        }
+
+        /* 导航条样式 */
+        .navbar {
+            border-radius: 0px;
+        }
+
+        .navbar-default {
+            background-color: #ffffff75;
+        }
+
+        .navbar-default .navbar-brand {
+            color: #fff;
+        }
+
+        .navbar-default .navbar-nav > li > a:hover {
+            color: #337ab7;
+        }
+
+        .navbar-default .navbar-nav > li > a:focus {
+            color: #337ab7;
+        }
+
+        .navbar-default .navbar-nav > li > a {
+            color: #fff;
+        }
+
+        .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
+            color: #555;
+            background-color: #3853805c;
+        }
+
+
+        .dropdown-menu > li > form {
+            display: block;
+            padding: 3px 20px;
+            clear: both;
+            font-weight: 400;
+            line-height: 1.42857143;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        /* 导航条链接悬停效果 */
+        .navbar-nav > li > a {
+            position: relative;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+            padding: 15px 20px;
+            overflow: hidden;
+        }
+
+        .navbar-nav > li > a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .navbar-nav > li > a:hover {
+            color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .navbar-nav > li > a:hover::after {
+            width: 100%;
+        }
+
+        /* 下拉菜单悬停效果 */
+        .dropdown-menu > li > a {
+            transition: all 0.2s ease;
+            position: relative;
+            padding: 8px 20px;
+        }
+
+        .dropdown-menu > li > a:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--accent-color);
+            padding-left: 25px;
+        }
+
+        .dropdown-menu > li > form > button {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            padding: 8px 20px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .dropdown-menu > li > form > button:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--accent-color);
+            padding-left: 25px;
+        }
+
+        /* 品牌名称悬停效果 */
+        .navbar-brand {
+            transition: all 0.3s ease;
+            position: relative;
+            padding-left: 0;
+        }
+
+        .navbar-brand:hover {
+            color: var(--accent-color) !important;
+            transform: scale(1.05);
+        }
+
+        .navbar-brand i {
+            margin-right: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .navbar-brand:hover i {
+            transform: rotate(5deg);
+        }
+
+        /* 搜索按钮悬停效果 */
+        .navbar-form .btn {
+            transition: all 0.3s ease;
+            background-color: transparent;
+            border-color: #ccc;
+            color: #555;
+        }
+
+        .navbar-form .btn:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 移动端菜单按钮效果 */
+        .navbar-toggle {
+            transition: all 0.3s ease;
+            border-color: var(--accent-color);
+        }
+
+        .navbar-toggle:hover {
+            background-color: rgba(52, 152, 219, 0.1) !important;
+            transform: rotate(90deg);
+        }
+
+        .navbar-toggle .icon-bar {
+            background-color: var(--accent-color);
+        }
+
+
+        /* 图谱容器样式 - 网格背景版本 */
+        #graph-container {
+            height: calc(100vh - 60px);
+            background-color: #f8f9fa;
+            background-image: linear-gradient(rgba(200, 200, 200, 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(200, 200, 200, 0.3) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center center;
+            border-radius: 0 0 7px 7px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 添加一个微妙的渐变覆盖 */
+        #graph-container::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(255, 255, 255, 0.7) 100%);
+            pointer-events: none;
+        }
+
+        /* 面板样式调整 */
+        .panel {
+            border-radius: 7px;
+            overflow: hidden; /* 确保圆角效果 */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .panel-default {
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .panel-default > .panel-heading {
+            color: #333;
+            background-color: #fcfcfc00;
+            /* border-color: #ddd; */
+        }
+
+        .panel-heading {
+            background-color: rgba(248, 249, 250, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        /* 图谱控制按钮样式 */
+        .graph-controls {
+            display: inline-block;
+            float: right;
+            margin-top: -5px;
+        }
+
+        .btn-control {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ddd;
+            margin-left: 5px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .btn-control:hover {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+
+        /* 调整面板标题位置 */
+        .panel-heading {
+            position: relative;
+            padding: 10px 15px;
+        }
+
+
+        /* 登录/注册页面样式 */
+        .auth-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .auth-box {
+            background: rgba(255, 255, 255, 0.9); /* 半透明背景让动态背景可见 */
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 518px;
+        }
+
+        .auth-box h1 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .auth-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .auth-link {
+            padding: 0.8rem 1.8rem;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .auth-link:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-link:last-child {
+            background-color: #2ecc71;
+        }
+
+        .auth-link:last-child:hover {
+            background-color: #27ae60;
+        }
+
+        /* 搜索框样式 */
+        #search-input {
+            min-width: 250px;
+            transition: all 0.3s;
+        }
+
+        #search-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+        }
+
+        #reset-search {
+            color: #999;
+            transition: all 0.2s;
+        }
+
+        #reset-search:hover {
+            color: #e74c3c;
+            background-color: #f5f5f5;
+        }
+
+        /* 滑动开关完整样式 */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+/* 外壳：弹性布局，横向排列 */
+.switch-wrapper{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    user-select:none;
+}
+
+/* 隐藏原生 checkbox */
+.switch-wrapper input{
+    opacity:0;
+    width:0;
+    height:0;
+    position:absolute;
+}
+
+/* 轨道 */
+.switch-wrapper .slider{
+    position:relative;
+    width:50px;
+    height:24px;
+    background:#ccc;
+    border-radius:24px;
+    transition:.4s;
+}
+
+/* 滑块 */
+.switch-wrapper .slider::before{
+    content:'';
+    position:absolute;
+    width:16px;
+    height:16px;
+    left:4px;
+    bottom:4px;
+    background:#fff;
+    border-radius:50%;
+    transition:.4s;
+}
+
+/* 开状态 */
+.switch-wrapper input:checked + .slider{
+    background:#2196F3;
+}
+.switch-wrapper input:checked + .slider::before{
+    transform:translateX(26px);
+}
+.label-text {
+    color: #b59aef;   /* ← 改成你想要的颜色即可 */
+    font-size: 14px;
+    margin-right: 6px;
+    transition: color .3s;
+}
+/* 文字变色 */
+.switch-wrapper input:checked + .slider + .label-text{
+    color:#2196F3;
+}
+.switch-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;                 /* 原来开关与文字的间距 */
+    transform: translate(6px, 4px); /* 右 4px、下 2px，按需改数值 */
+}
+
+
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- 动态背景 -->
+    <div class="dynamic-bg">
+        <div class="container"><div class="inner-container"><div class="shape"></div></div></div>
+    </div>
+
+    {% if user.is_authenticated %}
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                        data-target="#navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{% url 'home' %}">
+                    <i class="fa fa-book"></i> 计算机课程推荐平台
+                </a>
+            </div>
+
+            <div class="collapse navbar-collapse" id="navbar-collapse-1">
+                
+
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="/">⬅ 返回图谱</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                           aria-haspopup="true" aria-expanded="false">
+                           {{ user.username }} 个人中心 <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{% url 'account_change_password' %}">修改密码</a></li>
+                            <li><a href="{% url 'favorite_courses' %}">我的收藏夹</a></li>
+                            <li><a href="{% url 'recommend_users' %}">每日推荐</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'account_logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" style="border:none;background:none;width:100%;text-align:left;">退出登录</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+    </nav>
+    {% endif %}
+
+    <!-- 页面主体 -->
+    <div class="container-fluid">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- 公共 JS -->
+    <script src="{% static 'js/jquery-3.7.1.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-3.4.1-dist/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/vis-network.min.js' %}"></script>
+    <script src="{% static 'dynamic/script.js' %}"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

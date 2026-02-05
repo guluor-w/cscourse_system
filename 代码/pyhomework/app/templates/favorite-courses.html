@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>我的收藏课程</title>
+    <link rel="stylesheet" href="../static/plugins/bootstrap-3.4.1-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/vis-network.min.css">
+    <link rel="stylesheet" href="../static/dynamic/style.css">
+    <link rel="stylesheet" href="../static/plugins/font-awesome-4.7.0/css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --text-light: #ecf0f1;
+            --text-dark: #2c3e50;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container-fluid {
+            width: 90%;
+        }
+
+        /* 动态背景容器 */
+        .dynamic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* 确保背景在内容后面 */
+        }
+
+        /* 导航条样式 */
+        .navbar {
+            border-radius: 0px;
+        }
+
+        .navbar-default {
+            background-color: #ffffff75;
+        }
+
+        .navbar-default .navbar-brand {
+            color: #fff;
+        }
+
+        .navbar-default .navbar-nav > li > a:hover {
+            color: #337ab7;
+        }
+
+        .navbar-default .navbar-nav > li > a:focus {
+            color: #337ab7;
+        }
+
+        .navbar-default .navbar-nav > li > a {
+            color: #fff;
+        }
+
+        .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
+            color: #555;
+            background-color: #3853805c;
+        }
+
+
+        .dropdown-menu > li > form {
+            display: block;
+            padding: 3px 20px;
+            clear: both;
+            font-weight: 400;
+            line-height: 1.42857143;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        /* 导航条链接悬停效果 */
+        .navbar-nav > li > a {
+            position: relative;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+            padding: 15px 20px;
+            overflow: hidden;
+        }
+
+        .navbar-nav > li > a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .navbar-nav > li > a:hover {
+            color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .navbar-nav > li > a:hover::after {
+            width: 100%;
+        }
+
+        /* 下拉菜单悬停效果 */
+        .dropdown-menu > li > a {
+            transition: all 0.2s ease;
+            position: relative;
+            padding: 8px 20px;
+        }
+
+        .dropdown-menu > li > a:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--accent-color);
+            padding-left: 25px;
+        }
+
+        .dropdown-menu > li > form > button {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            padding: 8px 20px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .dropdown-menu > li > form > button:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--accent-color);
+            padding-left: 25px;
+        }
+
+        /* 品牌名称悬停效果 */
+        .navbar-brand {
+            transition: all 0.3s ease;
+            position: relative;
+            padding-left: 0;
+        }
+
+        .navbar-brand:hover {
+            color: var(--accent-color) !important;
+            transform: scale(1.05);
+        }
+
+        .navbar-brand i {
+            margin-right: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .navbar-brand:hover i {
+            transform: rotate(5deg);
+        }
+
+        /* 搜索按钮悬停效果 */
+        .navbar-form .btn {
+            transition: all 0.3s ease;
+            background-color: transparent;
+            border-color: #ccc;
+            color: #555;
+        }
+
+        .navbar-form .btn:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 移动端菜单按钮效果 */
+        .navbar-toggle {
+            transition: all 0.3s ease;
+            border-color: var(--accent-color);
+        }
+
+        .navbar-toggle:hover {
+            background-color: rgba(52, 152, 219, 0.1) !important;
+            transform: rotate(90deg);
+        }
+
+        .navbar-toggle .icon-bar {
+            background-color: var(--accent-color);
+        }
+
+
+        /* 课程 */
+        .course-header p {
+    padding: 5px;
+}
+
+        .course-header {
+            transition: all 0.3s ease;
+            position: relative;
+            color: white;
+            padding: 20px;
+        }
+
+        .course-header:hover {
+            color: #4c1875 !important;
+            transform: scale(1.05);
+        }
+
+        .course-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .course-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            transition: transform 0.2s;
+            background: rgb(255 255 255 / 63%);
+
+        }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-card .btn {
+    padding: 0px;
+}
+
+        
+        .unfav-link {
+            color: #616363;
+            text-decoration: underline;
+            padding-left: 10px;
+            font-weight: normal;
+            background: none;
+            border: none;
+        }
+
+        .unfav-link:hover {
+            color: #27292b;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 动态背景容器 -->
+<div class="dynamic-bg">
+    <div class="container">
+        <div class="inner-container">
+            <div class="shape"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 导航条 -->
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="/"><i class="fa fa-book"></i> 计算机课程推荐平台</a>
+        </div>
+
+        <ul class="nav navbar-nav navbar-right">
+            <li><a href="/">⬅ 返回图谱</a></li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                   aria-haspopup="true" aria-expanded="false">{{ user.username }} 个人中心 <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li><a href="{% url 'account_change_password' %}">修改密码</a></li>
+                    <li><a href="{% url 'favorite_courses' %}">我的收藏夹</a></li>
+                    <li><a href="{% url 'recommend_users' %}">每日推荐</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li>
+                        <form method="post" action="/accounts/logout/">
+                            {% csrf_token %}
+                            <button type="submit">退出登录</button>
+                        </form>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- 页面标题 -->
+<div class="container-fluid">
+    <div class="course-header">
+        <h1>我的收藏夹</h1>
+        <p>共收藏 {{ courses|length }} 门课程</p>
+    </div>
+
+    {% if courses %}
+        <div class="course-list">
+            {% for course in courses %}
+                <div class="course-card">
+                    <h3>{{ course.title }}</h3>
+                    <div class="meta">
+                        <p>老师: {{ course.teacher }}</p>
+                        <p>学校: {{ course.school }}</p>
+                        <p>简介: {{ course.description|default:"暂无描述" }}</p>
+                        <p>平台: {{ course.platform }}</p>
+                        <p>评分: {{ course.rating|default:"-" }}/5.0</p>
+                        <p>学习人数: {{ course.learners|default:"-" }}</p>
+                        <a href="{{ course.url }}" target="_blank" class="btn">查看课程</a>
+                        <button class="btn btn-default disabled">✅ 已收藏</button>
+                        <form method="post" action="{% url 'unfavorite_course' %}" class="unfav-form" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="course_id" value="{{ course.id }}">
+                        </form>
+                        <button class="btn btn-link unfav-link" onclick="unfavoriteCourse({{ course.id }}, this)">
+                            取消收藏
+                        </button>                        
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-center">你还没有收藏任何课程 😊</p>
+    {% endif %}
+</div>
+
+<!-- 脚本资源 -->
+<script src="../static/js/vis-network.min.js"></script>
+<script src="../static/js/jquery-3.7.1.js"></script>
+<script src="../static/plugins/bootstrap-3.4.1-dist/js/bootstrap.min.js"></script>
+<script src="../static/dynamic/script.js"></script>
+<script>
+function unfavoriteCourse(courseId, btn) {
+    fetch("/unfavorite-course/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: `course_id=${courseId}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // ✅ 移除该课程卡片
+            const card = btn.closest('.course-card');
+            if (card) card.remove();
+        } else {
+            alert("取消收藏失败：" + data.message);
+        }
+    })
+    .catch(error => {
+        console.error("取消收藏出错：", error);
+        alert("网络错误，请稍后重试");
+    });
+}
+</script>
+
+
+</body>
+</html>

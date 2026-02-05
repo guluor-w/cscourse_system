@@ -1,0 +1,241 @@
+<!-- templates/users/profile.html -->  
+{% extends "base.html" %}  
+{% load static %}  
+{% block extra_css %}
+<style>
+/* 强制圆形头像样式 */
+.avatar-circle {
+    width: 150px ;
+    height: 150px ;
+    border-radius: 50% ;
+    object-fit: cover ;
+    border: 4px solid #FF69B4 ;
+    display: block ;
+    margin: 0 auto ;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto max-w-2xl py-8">
+    <h2 class="text-2xl font-bold text-primary mb-6">个人资料</h2>
+    
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <!-- 头像预览和上传区域 -->
+        <div class="flex flex-col items-center mb-8">
+            <!-- 圆形头像预览 -->
+            <img src="{{ user.profile.avatar.url }}?t={{ user.profile.updated_at.timestamp }}" 
+            class="avatar-circle mb-4" alt="用户头像">
+            
+            <!-- 上传按钮 -->
+            <button id="uploadBtn" class="bg-primary hover:bg-accent text-white px-6 py-2 rounded-full transition-colors">
+                <i class="fa fa-upload mr-2"></i>更换头像
+            </button> 
+        </div>
+        
+        <!-- 头像裁剪模态框 -->
+        <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-xl p-6 w-full max-w-2xl">
+                <h3 class="text-xl font-bold mb-4">裁剪头像</h3>
+                
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- 裁剪区域 -->
+                    <div class="w-full md:w-1/2">
+                        <img id="cropImage" class="max-w-full" alt="裁剪预览">
+                    </div>
+                    
+                    <!-- 预览和操作 -->
+                    <div class="w-full md:w-1/2 flex flex-col">
+                        <div class="mb-4">
+                            <h4 class="font-medium mb-2">预览</h4>
+                            <!-- 关键：容器必须设置宽高+overflow-hidden -->
+                            <div id="previewContainer" class="w-32 h-32 mx-auto border border-gray-200 overflow-hidden">
+                            <img id="previewImage" class="w-full h-full object-cover" alt="正方形预览">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-auto">
+                            <form id="cropForm" method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" id="x" name="x">
+                                <input type="hidden" id="y" name="y">
+                                <input type="hidden" id="width" name="width">
+                                <input type="hidden" id="height" name="height">
+
+                                <input type="file" id="avatarInput" name="avatar" accept="image/*" class="hidden">
+                                
+                                <div class="flex gap-x-4">  
+                                    <button type="button" id="cancelBtn" class="flex-1 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-1 transition-colors">取消</button>
+                                    <button type="submit" class="flex-1 bg-primary text-white px=4 py-2 rounded-lg hover:bg-accent transition-colors">保存头像</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 用户资料表单 -->  
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group mb-4">
+                <label class="font-medium">个人简介</label>
+                <textarea name="bio" class="form-control" rows="3">{{ form.bio.value|default:'' }}</textarea>
+            </div>
+            <div class="form-group mb-6">
+                <label class="font-medium">学习目标</label>
+                <input type="text" name="learning_goal" class="form-control" value="{{ form.learning_goal.value|default:'' }}">
+            </div>
+            <button type="submit" class="bg-primary hover:bg-accent text-white px-6 py= rounded-full transition-colors">保存资料</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% if messages %}
+<div class="messages mt-4">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% block extra_js %}
+<!-- 引入Cropper.js库 -->
+<link rel="stylesheet" href="{% static 'cropper/cropper.min.css' %}">
+<script src="{% static 'cropper/cropper.min.js' %}"></script>
+
+<script>
+// 等待DOM完全加载后执行
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取DOM元素并检查存在性
+    const uploadBtn = document.getElementById('uploadBtn');
+    const avatarInput = document.getElementById('avatarInput');
+    const cropModal = document.getElementById('cropModal');
+    const cropImage = document.getElementById('cropImage');
+    const previewImage = document.getElementById('previewImage');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const cropForm = document.getElementById('cropForm');
+    const xInput = document.getElementById('x');
+    const yInput = document.getElementById('y');
+    const widthInput = document.getElementById('width');
+    const heightInput = document.getElementById('height');
+    
+    // 检查必要元素是否存在
+    const requiredElements = [uploadBtn, avatarInput, cropModal, cropImage, cancelBtn, cropForm];
+    if (requiredElements.some(el => !el)) {
+        console.error('缺少必要的DOM元素，请检查ID是否正确');
+        return;
+    }
+
+    let cropper = null;  // 全局Cropper实例
+
+    // 上传按钮点击事件
+    uploadBtn.addEventListener('click', () => {
+        avatarInput.click();
+    });
+
+    // 文件选择事件
+    avatarInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            cropImage.src = event.target.result;
+            cropModal.classList.remove('hidden');
+            
+            // 销毁旧实例（如果存在）
+            if (cropper) {
+                cropper.destroy();
+            }
+
+            try {
+                // 初始化Cropper
+                cropper = new Cropper(cropImage, {
+                    aspectRatio: 1,          // 自由比例裁剪
+                    viewMode: 1,               // 限制裁剪框在图片内
+                    preview: '#previewContainer',   // 预览区域
+                    movable: true,
+                    rotatable: true,
+                    scalable: true,
+                    zoomable: true,
+                    cropBoxResizable: true,
+                    cropBoxMovable: true,
+                    crop: (e) => {
+                        // 更新裁剪参数
+                        
+                        xInput.value = e.detail.x;
+                        yInput.value = e.detail.y;
+                        widthInput.value = e.detail.width;
+                        heightInput.value = e.detail.height;
+                    }
+                });
+            } catch (error) {
+                console.error('Cropper初始化失败:', error);
+                alert('图片裁剪功能初始化失败，请刷新页面重试');
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // 取消按钮事件
+    cancelBtn.addEventListener('click', () => {
+        cropModal.classList.add('hidden');
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;  // 重置实例
+        }
+        avatarInput.value = '';
+    });
+
+    // 表单提交事件
+    cropForm.addEventListener('submit', (e) => {
+        // 应显示false
+        e.preventDefault();
+        
+        if (!cropper) {
+            
+            alert('请先选择并裁剪图片');
+            return;
+        }
+
+        // 获取裁剪参数并验证
+        const width = parseInt(widthInput.value);
+        const height = parseInt(heightInput.value);
+        
+        if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+            alert('请先调整裁剪区域');
+            return;
+        }
+
+    
+            const formData = new FormData(cropForm);
+            formData.append('avatar', avatarInput.files[0]);
+            
+            for (let pair of formData.entries()) {
+            
+            }
+            // 发送AJAX请求
+            fetch(e.target.action, {
+        method: e.target.method,  // 使用表单的method属性
+        body: new FormData(e.target),
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+            .then(response => {
+            // 无论成功失败，都重定向回个人资料页
+            window.location.href = "{% url 'users:profile' %}";
+        })
+        .catch(error => {
+            console.error('请求错误:', error);
+            alert('网络错误，请重试');
+        });
+    }, 'image/jpeg', 0.9);  // 90%质量
+    
+});
+</script>
+{% endblock %}

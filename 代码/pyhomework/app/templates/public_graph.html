@@ -1,0 +1,103 @@
+
+{% extends 'base.html' %}
+{% load static %} 
+{% block title %}{{ target_username }} 的公开图谱{% endblock %}
+
+{% block content %}
+<!-- 图谱面板 -->
+<div class="container-fluid">
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+  <span style="font-weight:600; position:relative; top:4px;">
+    <i class="fa fa-map-o"></i> {{ target_username }} 的公开图谱
+  </span>
+
+  <!-- 按钮组：靠右 -->
+  <div class="pull-right">
+    <button class="btn btn-sm btn-control" id="reset-graph"   title="重置图谱"><i class="glyphicon glyphicon-refresh"></i></button>
+    <button class="btn btn-sm btn-control" id="zoom-in"       title="放大"><i class="glyphicon glyphicon-zoom-in"></i></button>
+    <button class="btn btn-sm btn-control" id="zoom-out"      title="缩小"><i class="glyphicon glyphicon-zoom-out"></i></button>
+    <button class="btn btn-sm btn-control" id="move-left"     title="左移"><i class="glyphicon glyphicon-arrow-left"></i></button>
+    <button class="btn btn-sm btn-control" id="move-right"    title="右移"><i class="glyphicon glyphicon-arrow-right"></i></button>
+    <button class="btn btn-sm btn-control" id="move-up"       title="上移"><i class="glyphicon glyphicon-arrow-up"></i></button>
+    <button class="btn btn-sm btn-control" id="move-down"     title="下移"><i class="glyphicon glyphicon-arrow-down"></i></button>
+    <button class="btn btn-sm btn-control" id="reset-view"    title="重置视图"><i class="glyphicon glyphicon-home"></i></button>
+  </div>
+</div>
+    <div id="graph-container" style="height: calc(100vh - 160px);"></div>
+  </div>
+</div>
+
+<!-- 图谱脚本 -->
+<script src="{% static 'js/vis-network.min.js' %}"></script>
+<script>
+/* 工具函数：颜色 / 大小 */
+function getNodeColor(type) {
+  switch (type) {
+    case 'Root':        return '#ff6f91';
+    case 'Subject':     return '#ff9671';
+    case 'Sub_subject': return '#ffc75f';
+    default:            return '#f9f871';
+  }
+}
+function getNodeSize(type) {
+  switch (type) {
+    case 'Root':        return 15;
+    case 'Subject':     return 11.5;
+    case 'Sub_subject': return 9;
+    default:            return 8.5;
+  }
+}
+
+/* 渲染公开图谱 */
+document.addEventListener('DOMContentLoaded', function () {
+  fetch(`/neo4j-data/?user_id={{ target_user_id }}`)
+    .then(res => res.ok ? res.json() : Promise.reject(res))
+    .then(({ nodes=[], edges=[] }) => {
+      const container = document.getElementById('graph-container');
+      const data = {
+        nodes: new vis.DataSet(nodes.map(n => ({
+          id   : n.id,
+          label: n.name,
+          color: getNodeColor(n.type),
+          size : getNodeSize(n.type),
+          shape: 'dot'
+        }))),
+        edges: new vis.DataSet(edges.map(e => ({
+          from  : e.from,
+          to    : e.to,
+          arrows: 'to'
+        })))
+      };
+      const options = {
+        layout: { randomSeed: 42 },
+        physics: { enabled: true },
+        interaction:{ zoomView:true, dragView:true, dragNodes:true }
+      };
+      const network = new vis.Network(container, data, options);
+
+      /* 控制按钮 */
+      document.getElementById('zoom-in').onclick   = () => network.moveTo({scale: network.getScale()*1.2});
+      document.getElementById('zoom-out').onclick  = () => network.moveTo({scale: network.getScale()/1.2});
+      document.getElementById('reset-view').onclick= () => network.fit({animation:{duration:500}});
+      document.getElementById('reset-graph').onclick= () => network.fit({animation:{duration:500}});
+      ['left','right','up','down'].forEach(dir=>{
+        document.getElementById(`move-${dir}`).onclick = () => {
+          const p = network.getViewPosition();
+          const step = 100;
+          switch(dir){
+            case 'left':  network.moveTo({position:{x:p.x-step, y:p.y}}); break;
+            case 'right': network.moveTo({position:{x:p.x+step, y:p.y}}); break;
+            case 'up':    network.moveTo({position:{x:p.x, y:p.y-step}}); break;
+            case 'down':  network.moveTo({position:{x:p.x, y:p.y+step}}); break;
+          }
+        };
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      alert('无法加载公开图谱');
+    });
+});
+</script>
+{% endblock %}

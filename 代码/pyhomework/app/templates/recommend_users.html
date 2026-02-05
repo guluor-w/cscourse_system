@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}每日推荐 - {{ block.super }}{% endblock %}
+{% block content %}
+<h2>每日推荐公开图谱</h2>
+<div class="row">
+    {% for user in recommended_users %}
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">{{ user.username }}的知识图谱</h5>
+                <p class="card-text">节点数量: {{ user.node_count }}</p>
+                <a href="{% url 'view_public_graph' user.user_id %}" class="btn btn-primary">查看图谱</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-center">暂无公开图谱推荐，快去创建并公开你的图谱吧！</p>
+    {% endfor %}
+</div>
+{% endblock %}

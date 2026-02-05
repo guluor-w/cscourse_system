@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录-计算机课程推荐平台</title>
+    <link rel="stylesheet" href="/static/plugins/bootstrap-3.4.1-dist/css/bootstrap.min.css">
+    <link href="/static/css/vis-network.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/dynamic/style.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --text-light: #ecf0f1;
+            --text-dark: #2c3e50;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --error-color: #e74c3c;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            overflow: hidden; /* 防止动态背景导致滚动条出现 */
+        }
+
+        /* 动态背景容器 */
+        .dynamic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* 确保背景在内容后面 */
+        }
+
+        /* 错误消息样式 */
+        .alert-error {
+            color: var(--error-color);
+            text-align: left;
+        }
+
+        /* 登录/注册页面样式 */
+        .auth-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .auth-box {
+            background: rgba(255, 255, 255, 0.9); /* 半透明背景让动态背景可见 */
+            padding: 2.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+            width: 100%;
+            max-width: 450px;
+            position: relative; /* 确保在动态背景上方 */
+        }
+
+        .auth-box h1 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .auth-box p {
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-box a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-box a:hover {
+            text-decoration: underline;
+        }
+
+        /* 登录表单样式 */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            margin-top: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .form-group label {
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .remember-me label {
+            margin-bottom: 0;
+            font-weight: normal;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 0.5rem;
+        }
+
+        .forgot-password a {
+            font-size: 1.2rem;
+        }
+
+        .submit-btn {
+            padding: 0.8rem;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .submit-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+<!-- 动态背景容器 -->
+<div class="dynamic-bg">
+    <div class="container">
+        <div class="inner-container">
+            <div class="shape"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 登录表单容器 -->
+<div class="auth-container">
+    <div class="auth-box">
+        <h1>登录</h1>
+        <p>如果您还没有创建账号，请先 <a href="/accounts/signup/">注册</a></p>
+
+
+        <form method="post" action="/accounts/login/" class="login-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="id_login">用户名</label>
+                <input type="text" name="login" placeholder="用户名" autocomplete="username" maxlength="150" required
+                       id="id_login">
+            </div>
+
+            <div class="form-group">
+                <label for="id_password">密码</label>
+                <input type="password" name="password" placeholder="密码" autocomplete="current-password" required
+                       id="id_password">
+                <div class="forgot-password">
+                    <a href="/accounts/password/reset/">忘记密码？</a>
+                </div>
+            </div>
+
+            <div class="remember-me">
+                <input type="checkbox" name="remember" id="id_remember">
+                <label for="id_remember" style="padding-top: 3px">记住我</label>
+            </div>
+
+            <button type="submit" class="submit-btn">登 录</button>
+        </form>
+    </div>
+</div>
+
+<!-- 脚本部分 -->
+<script src="/static/js/jquery-3.7.1.js"></script>
+<script src="/static/js/vis-network.min.js"></script>
+<script src="/static/plugins/bootstrap-3.4.1-dist/js/bootstrap.min.js"></script>
+<script src="/static/dynamic/script.js"></script> <!-- 动态背景的JS文件 -->
+
+</body>
+</html>

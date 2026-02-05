@@ -1,0 +1,531 @@
+{% load static %} 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ current_node.name }} - 课程列表</title>
+    <link rel="stylesheet" href="../static/plugins/bootstrap-3.4.1-dist/css/bootstrap.min.css">
+    <link href="../static/css/vis-network.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../static/dynamic/style.css">
+    <link rel="stylesheet" href="{% static 'plugins/font-awesome-4.7.0/css/font-awesome.min.css' %}">
+    <style>
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --text-light: #ecf0f1;
+            --text-dark: #2c3e50;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container-fluid {
+            width: 90%;
+        }
+
+        /* 动态背景容器 */
+        .dynamic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* 确保背景在内容后面 */
+        }
+
+        /* 导航条样式 */
+        .navbar {
+            border-radius: 0px;
+        }
+
+        .navbar-default {
+            background-color: #ffffff75;
+        }
+
+        .navbar-default .navbar-brand {
+            color: #fff;
+        }
+
+        .navbar-default .navbar-nav > li > a:hover {
+            color: #337ab7;
+        }
+
+        .navbar-default .navbar-nav > li > a:focus {
+            color: #337ab7;
+        }
+
+        .navbar-default .navbar-nav > li > a {
+            color: #fff;
+        }
+
+        .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
+            color: #555;
+            background-color: #3853805c;
+        }
+
+
+        .dropdown-menu > li > form {
+            display: block;
+            padding: 3px 20px;
+            clear: both;
+            font-weight: 400;
+            line-height: 1.42857143;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        /* 导航条链接悬停效果 */
+        .navbar-nav > li > a {
+            position: relative;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+            padding: 15px 20px;
+            overflow: hidden;
+        }
+
+        .navbar-nav > li > a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .navbar-nav > li > a:hover {
+            color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .navbar-nav > li > a:hover::after {
+            width: 100%;
+        }
+
+        /* 下拉菜单悬停效果 */
+        .dropdown-menu > li > a {
+            transition: all 0.2s ease;
+            position: relative;
+            padding: 8px 20px;
+        }
+
+        .dropdown-menu > li > a:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--accent-color);
+            padding-left: 25px;
+        }
+
+        .dropdown-menu > li > form > button {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            padding: 8px 20px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .dropdown-menu > li > form > button:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--accent-color);
+            padding-left: 25px;
+        }
+
+        /* 品牌名称悬停效果 */
+        .navbar-brand {
+            transition: all 0.3s ease;
+            position: relative;
+            padding-left: 0;
+        }
+
+        .navbar-brand:hover {
+            color: var(--accent-color) !important;
+            transform: scale(1.05);
+        }
+
+        .navbar-brand i {
+            margin-right: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .navbar-brand:hover i {
+            transform: rotate(5deg);
+        }
+
+        /* 搜索按钮悬停效果 */
+        .navbar-form .btn {
+            transition: all 0.3s ease;
+            background-color: transparent;
+            border-color: #ccc;
+            color: #555;
+        }
+
+        .navbar-form .btn:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 移动端菜单按钮效果 */
+        .navbar-toggle {
+            transition: all 0.3s ease;
+            border-color: var(--accent-color);
+        }
+
+        .navbar-toggle:hover {
+            background-color: rgba(52, 152, 219, 0.1) !important;
+            transform: rotate(90deg);
+        }
+
+        .navbar-toggle .icon-bar {
+            background-color: var(--accent-color);
+        }
+
+
+        /* 课程 */
+        .course-header p {
+            padding: 5px;
+        }
+
+        .course-header {
+            transition: all 0.3s ease;
+            position: relative;
+            color: white;
+            padding: 20px;
+        }
+
+        .course-header:hover {
+            color: #4c1875 !important;
+            transform: scale(1.05);
+        }
+
+        .course-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .course-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            transition: transform 0.2s;
+            background: rgb(255 255 255 / 63%);
+
+        }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-card .btn {
+            padding: 0px;
+        }
+
+        button#addCourseBtn {
+            margin-left: 2.5rem;
+        }
+        
+        button.btn.btn-link.text-danger { 
+            margin-left: 2rem;
+        }
+        
+        .be-favorited {
+            margin-left: 2rem;
+        }
+
+    </style>
+</head>
+<body>
+<!-- 动态背景容器 -->
+<div class="dynamic-bg">
+    <div class="container">
+        <div class="inner-container">
+            <div class="shape"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 导航条 -->
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#"><i class="fa fa-book"></i> 计算机课程推荐平台</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <!-- 搜索框  -->
+            <form class="navbar-form navbar-left" id="search-form">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="search-input" placeholder="搜索关键词/老师/学校/平台"
+                           value="{{ search_term|default:'' }}">
+                </div>
+                <button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+            </form>
+
+            <!--靠左--->
+            <ul class="nav navbar-nav">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                       aria-expanded="false">
+                        排序方式 <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li class="{% if sort_type == 'enrolled' %}active{% endif %}">
+                            <a href="?node_id={{ current_node.id }}&sort=enrolled{% if search_term %}&search={{ search_term }}{% endif %}">按
+                                学习人数 排序</a>
+                        </li>
+                        <li class="{% if sort_type == 'score' %}active{% endif %}">
+                            <a href="?node_id={{ current_node.id }}&sort=score{% if search_term %}&search={{ search_term }}{% endif %}">按
+                                评分 排序</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <!--靠右--->
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/">⬅ 返回图谱</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                       aria-haspopup="true"
+                       aria-expanded="false">{{ user.username }} 个人中心<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'account_change_password' %}">修改密码</a></li>
+                        <li><a href="{% url 'favorite_courses' %}">我的收藏夹</a></li>
+                        <li><a href="{% url 'recommend_users' %}">每日推荐</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li>
+                            <form method="post" action="/accounts/logout/">
+                                {% csrf_token %}
+                                <button type="submit">退出登录</button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<div class="container-fluid">
+    <div class="course-header">
+        <h1>{{ current_node.name }}</h1>
+        <p>共找到 {{ courses|length }} 门相关课程</p>
+    </div>
+    
+            <button class="btn btn-primary" id="addCourseBtn" style="margin-top: 20px;">
+                <i class="fa fa-plus"></i> 添加课程
+            </button>
+            <!-- 添加课程模态框 -->
+            <div class="modal fade" id="addCourseModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">
+                                <span>&times;</span>
+                            </button>
+                            <h4 class="modal-title">为 {{ current_node.name }} 添加课程</h4>
+                        </div>
+                        <div class="modal-body">
+                            <form id="courseForm">
+                                <!--必填-->
+                                <div class="form-group">
+                                    <label>课程标题 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="title" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>课程链接 <span class="text-danger">*</span></label>
+                                    <input type="url" class="form-control" name="url" required>
+                                </div>
+                                <!-- 选填字段... -->
+                                <div class="form-group">
+                                    <label>老师</label>
+                                    <input type="text" class="form-control" name="teacher">
+                                </div>
+                                <div class="form-group">
+                                    <label>学校</label>
+                                    <input type="text" class="form-control" name="school">
+                                </div>
+                                <div class="form-group">
+                                    <label>简介</label>
+                                    <input type="text" class="form-control" name="description">
+                                </div>
+                                <div class="form-group">
+                                    <label>平台</label>
+                                    <input type="text" class="form-control" name="platform">
+                                </div>
+                                <div class="form-group">
+                                    <label>评分（满分100.0）</label>
+                                    <input type="text" class="form-control" name="rating">
+                                </div>
+                                <div class="form-group">
+                                    <label>学习人数</label>
+                                    <input type="text" class="form-control" name="learners">
+                                </div>
+                                <input type="hidden" name="node_id" value="{{ current_node.id }}">
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                            <button type="button" class="btn btn-primary" id="confirmAddCourse">确认添加</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+    <div class="course-list">
+    {% for course in courses %}
+        <div class="course-card">
+            <h3>{{ course.title }}</h3>
+            <div class="meta">
+                <p>老师: {{ course.teacher|default:"-" }}</p>
+                <p>学校: {{ course.school|default:"-" }}</p>
+                <p>简介: {{ course.description|default:"暂无描述" }}</p>
+                <p>平台: {{ course.platform|default:"-" }}</p>
+                <p>评分: {{ course.rating|default:"-" }}/100.0</p>
+                <p>学习人数: {{ course.learners|default:"-" }}</p>
+                <a href="{{ course.url }}" target="_blank" class="btn">查看课程</a>
+                {% if course.is_favorited %}
+                    <button class="btn btn-default disabled be-favorited">
+                        ✅ 已收藏
+                    </button>
+                {% else %}
+                    <button class="btn btn-link text-danger" onclick="favoriteCourse({{ course.id }})">
+                        <i class="fa fa-heart"></i> 收藏
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+
+<script src="../static/js/vis-network.min.js"></script>
+<script src="../static/js/jquery-3.7.1.js"></script>
+<script src="../static/plugins/bootstrap-3.4.1-dist/js/bootstrap.min.js"></script>
+
+<script src="../static/dynamic/script.js"></script> <!-- 动态背景的JS文件 -->
+
+<!-- 新增关键词搜索课程 -->
+<script>
+    document.getElementById('search-form').addEventListener('submit', function (e) {
+        e.preventDefault();  // 阻止默认提交行为
+
+        const keyword = document.getElementById('search-input').value.trim();
+        const urlParams = new URLSearchParams(window.location.search);
+        const nodeId = urlParams.get('node_id');
+        const sort = urlParams.get('sort') || 'score';
+
+        if (!nodeId) {
+            alert("未获取到节点ID，无法搜索");
+            return;
+        }
+
+        // 构造跳转 URL
+        const searchUrl = `/click-node/?node_id=${nodeId}&sort=${sort}&search=${encodeURIComponent(keyword)}`;
+        window.location.href = searchUrl;  // 页面刷新 + 后端渲染
+    });
+</script>
+
+<!-- 新增收藏信息输出功能 -->
+<script>
+    function favoriteCourse(courseId) {
+        fetch("/favorite-course/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: `course_id=${courseId}`
+        }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const btn = document.querySelector(`button[onclick="favoriteCourse(${courseId})"]`);
+                    if (btn) {
+                        btn.innerHTML = "✅ 已收藏";
+                        btn.classList.remove("btn-link", "text-danger");
+                        btn.classList.add("btn-default");
+                        btn.disabled = true;
+                    }
+                } else {
+                    alert("收藏失败：" + data.message);
+                }
+            })
+            .catch(error => {
+                console.error("收藏请求出错：", error);
+                alert("网络错误，请稍后重试。");
+            });
+    }
+
+    // 显示添加课程模态框
+    $('#addCourseBtn').click(function () {
+        $('#addCourseModal').modal('show');
+    });
+
+    // 提交课程表单
+    $('#confirmAddCourse').click(function () {
+        const formData = {
+            node_id: $('input[name="node_id"]').val(),
+            title: $('input[name="title"]').val(),
+            url: $('input[name="url"]').val(),
+            // 选填
+            teacher: $('input[name="teacher"]').val(),
+            school: $('input[name="school"]').val(),
+            description: $('input[name="description"]').val(),
+            platform: $('input[name="platform"]').val(),
+            learners: $('input[name="learners"]').val(),
+            rating: $('input[name="rating"]').val(),
+            // 其他字段...
+        };
+
+        if (!formData.title || !formData.url) {
+            alert('请填写标题和链接');
+            return;
+        }
+
+        fetch('/add-course/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(formData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('课程添加成功！');
+                    location.reload(); // 刷新页面显示新课程
+                } else {
+                    alert('添加失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('网络错误，请重试');
+            });
+    });
+</script>
+
+</body>
+
+</html>
